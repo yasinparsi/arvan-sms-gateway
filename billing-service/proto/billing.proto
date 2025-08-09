@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package billing;
+
+option go_package = "billing-service/proto";
+
+service BillingService {
+  rpc CheckBalance (BillingRequest) returns (BillingResponse);
+}
+
+message BillingRequest {
+  string user_id = 1;
+  int64 cost = 2;
+}
+
+message BillingResponse {
+  bool allowed = 1;
+  string error = 2;
+}
