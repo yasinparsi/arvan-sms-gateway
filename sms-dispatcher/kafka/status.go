@@ -3,6 +3,8 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"strings"
 	"sms-dispatcher/logger"
 	"sms-dispatcher/model"
 	"time"
@@ -25,8 +27,17 @@ func publishToStatus(msg model.SmsMessage, status string) {
 		return
 	}
 
+	// Determine Kafka brokers from env
+	brokersEnv := os.Getenv("KAFKA_BROKERS")
+	var brokers []string
+	if brokersEnv == "" {
+		brokers = []string{"Kafka00Service:9092"}
+	} else {
+		brokers = strings.Split(brokersEnv, ",")
+	}
+
 	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9094"},
+		Brokers:  brokers,
 		Topic:    "sms-status",
 		Balancer: &kafka.LeastBytes{},
 	})

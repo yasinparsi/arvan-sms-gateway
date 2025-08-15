@@ -26,17 +26,17 @@ func (h *Handler) ChargeUser(c *gin.Context) {
 		return
 	}
 
-	amount, err := strconv.ParseInt(amountStr, 10, 64)
-	if err != nil || amount <= 0 {
+	amountInt, err := strconv.Atoi(amountStr) // convert to int
+	if err != nil || amountInt <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "amount must be a positive integer"})
 		return
 	}
 
-	err = h.redisClient.ChargeUser(c.Request.Context(), userID, amount)
+	err = h.redisClient.ChargeUser(c.Request.Context(), userID, int64(amountInt))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to charge user"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "charged successfully", "user_id": userID, "amount": amount})
+	c.JSON(http.StatusOK, gin.H{"message": "charged successfully", "user_id": userID, "amount": amountInt})
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/signal"
+	"strings"
 	"sms-dispatcher/kafka"
 	"sms-dispatcher/logger"
 	"sms-dispatcher/provider"
@@ -21,7 +22,14 @@ func main() {
 	}
 
 	// 3. Kafka broker ها
-	brokers := []string{"localhost:9094"}
+	// Read brokers from env so container can use kafka service name
+	kafkaBrokersEnv := os.Getenv("KAFKA_BROKERS")
+	var brokers []string
+	if kafkaBrokersEnv == "" {
+		brokers = []string{"Kafka00Service:9092"}
+	} else {
+		brokers = strings.Split(kafkaBrokersEnv, ",")
+	}
 
 	// 4. راه‌اندازی کانسومرها
 	go kafka.StartConsumer(brokers, "sms-normal")

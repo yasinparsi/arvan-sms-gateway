@@ -18,7 +18,12 @@ import (
 )
 
 func main() {
-	redisAddr := "localhost:6379"
+	// Read Redis address from env so container can use service name
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	log.Printf("Connecting to Redis at %s", redisAddr)
 	redisClient := storage.NewRedisClient(redisAddr)
 
 	// Start REST API server
@@ -26,6 +31,7 @@ func main() {
 		r := gin.Default()
 		handler := api.NewHandler(redisClient)
 		r.POST("/charge/:userid", handler.ChargeUser)
+
 		log.Println("REST API listening on :8080")
 		if err := r.Run(":8081"); err != nil {
 			log.Fatalf("failed to start REST API: %v", err)

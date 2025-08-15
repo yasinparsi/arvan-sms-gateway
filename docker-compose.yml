@@ -99,3 +99,85 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - kafka_network
+
+  # Billing service: REST on 8081, gRPC on 4040
+  billing-service:
+    image: golang:1.24-alpine
+    container_name: billing-service
+    working_dir: /app
+    volumes:
+      - ./billing-service:/app
+    command: sh -c "go mod download && go run ./cmd/main.go"
+    environment:
+      - GO111MODULE=on
+      - KAFKA_BROKERS=Kafka00Service:9092
+      - REDIS_ADDR=RedisService:6379
+    ports:
+      - "8081:8081" # REST
+      - "4040:4040" # gRPC
+    depends_on:
+      - RedisService
+      - Kafka00Service
+    networks:
+      - kafka_network
+
+  # Report service: HTTP on 6070
+  report-service:
+    image: golang:1.24-alpine
+    container_name: report-service
+    working_dir: /app
+    volumes:
+      - ./report-service:/app
+    command: sh -c "go mod download && go run ./main.go"
+    environment:
+      - GO111MODULE=on
+      - KAFKA_BROKERS=Kafka00Service:9092
+      - POSTGRES_HOST=PostgresService
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=report_user
+      - POSTGRES_PASSWORD=report_pass
+      - POSTGRES_DB=sms_report
+    ports:
+      - "6070:6070"
+    depends_on:
+      - PostgresService
+      - Kafka00Service
+    networks:
+      - kafka_network
+
+  # SMS dispatcher: background consumer, no exposed port
+  sms-dispatcher:
+    image: golang:1.24-alpine
+    container_name: sms-dispatcher
+    working_dir: /app
+    volumes:
+      - ./sms-dispatcher:/app
+    command: sh -c "go mod download && go run ./main.go"
+    environment:
+      - GO111MODULE=on
+      - KAFKA_BROKERS=Kafka00Service:9092
+    depends_on:
+      - Kafka00Service
+      - RedisService
+    networks:
+      - kafka_network
+
+  # SMS gateway: HTTP API on 7070
+  sms-gateway:
+    image: golang:1.24-alpine
+    container_name: sms-gateway
+    working_dir: /app
+    volumes:
+      - ./sms-gateway:/app
+    command: sh -c "go mod download && go run ./main.go"
+    environment:
+      - GO111MODULE=on
+      - KAFKA_BROKERS=Kafka00Service:9092
+      - BILLING_GRPC_ADDR=billing-service:4040
+    ports:
+      - "7070:7070"
+    depends_on:
+      - billing-service
+      - Kafka00Service
+    networks:
+      - kafka_network

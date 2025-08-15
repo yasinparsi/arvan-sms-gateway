@@ -10,6 +10,14 @@ type RedisClient struct {
 	client *redis.Client
 }
 
+func (r *RedisClient) Ping(context context.Context) {
+	panic("unimplemented")
+}
+
+func (r *RedisClient) Client() {
+	panic("unimplemented")
+}
+
 func NewRedisClient(addr string) *RedisClient {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: addr,
@@ -25,7 +33,8 @@ end
 local amount = tonumber(current)
 local required = tonumber(ARGV[1])
 if amount >= required then
-  return {1, amount}
+  local new = redis.call("DECRBY", KEYS[1], required)
+  return {1, new}
 else
   return {0, amount}
 end

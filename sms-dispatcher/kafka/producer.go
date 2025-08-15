@@ -3,6 +3,8 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"strings"
 	"sms-dispatcher/logger"
 	"sms-dispatcher/model"
 	"time"
@@ -23,8 +25,16 @@ func publishToDLQ(msg model.SmsMessage, reason string) {
 		return
 	}
 
+	brokersEnv := os.Getenv("KAFKA_BROKERS")
+	var brokers []string
+	if brokersEnv == "" {
+		brokers = []string{"Kafka00Service:9092"}
+	} else {
+		brokers = strings.Split(brokersEnv, ",")
+	}
+
 	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9094"},
+		Brokers:  brokers,
 		Topic:    "sms-dlq",
 		Balancer: &kafka.LeastBytes{},
 	})
@@ -51,8 +61,16 @@ func requeueToDLQ(msg model.DLQMessage) {
 		return
 	}
 
+	brokersEnv := os.Getenv("KAFKA_BROKERS")
+	var brokers []string
+	if brokersEnv == "" {
+		brokers = []string{"Kafka00Service:9092"}
+	} else {
+		brokers = strings.Split(brokersEnv, ",")
+	}
+
 	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"localhost:9094"},
+		Brokers:  brokers,
 		Topic:    "sms-dlq",
 		Balancer: &kafka.LeastBytes{},
 	})
