@@ -33,7 +33,7 @@ end
 local amount = tonumber(current)
 local required = tonumber(ARGV[1])
 if amount >= required then
-  local new = redis.call("DECRBY", KEYS[1], required)
+  local new = redis.call("DECRBY", KEYS[1], 1000)
   return {1, new}
 else
   return {0, amount}
